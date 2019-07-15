@@ -125,19 +125,13 @@ def response_path(path):
     if path not in paths:
         raise NameError
 
-    if 'txt' in path:
-        txt = urllib.request.urlopen(path).read()
-        print(txt)
-        txt = txt.encode()
-        mime_type = mimetypes.guess_type(path)[0]
-        return txt, mime_type
 
     path.replace("/", "\\")
     p = 'C:/Users/stasaki/Desktop/Sean\'s stuff/python/socket-http-server/webroot/'
     p.replace("/", "\\")
 
 
-    if path != '/a_web_page.html':
+    if path != '/a_web_page.html' or '/sample.txt':
         with open(p + path, 'rb') as f:
             content = f.read()
     else:
