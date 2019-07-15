@@ -3,6 +3,7 @@ import sys
 import traceback
 import mimetypes
 import os
+import urllib.request
 
 def response_ok(body=b"This is a minimal response", mimetype=b"text/plain"):
     """
@@ -105,6 +106,8 @@ def response_path(path):
 
     paths = [
                 '/a_web_page.html',
+                '/sample.txt',
+                '/make_time.py',
                 '/images/sample_1.png',
                 '/images/JPEG_example.jpg',
                 '/images/Sample_Scene_Balls.jpg',
@@ -115,13 +118,21 @@ def response_path(path):
     if path == '/' or path =='/images':
 
         content, mime_type = dir_contents(root_dir + path)
+        content = content.encode()
+        mime_type = mime_type
         return content, mime_type
 
     if path not in paths:
         raise NameError
 
+    if 'txt' in path:
+        txt = urllib.request.urlopen(path).read()
+        print(txt)
+        txt = txt.encode()
+        mime_type = mimetypes.guess_type(path)[0]
+        return txt, mime_type
+
     path.replace("/", "\\")
-    #'C:\\Users\\stasaki\\Desktop\\Sean\'s stuff\\python\\socket-http-server\\webroot\\'
     p = 'C:/Users/stasaki/Desktop/Sean\'s stuff/python/socket-http-server/webroot/'
     p.replace("/", "\\")
 
@@ -144,7 +155,7 @@ def dir_contents(root):
             content += dir + ", "
         for file in files:
             content += file + ", "
-    content = content[:-1].encode()
+    content = content[:-2].encode()
     mime_type = "text/plain"
     return content, mime_type
 
@@ -195,8 +206,12 @@ def server(log_buffer=sys.stderr):
                         body= content,
                         mimetype= mime_type.encode()
                         )
+
                 except NotImplementedError:
                     response = response_method_not_allowed()
+
+                except NameError:
+                    response = response_not_found()
 
                 conn.sendall(response)
 
