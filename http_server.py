@@ -1,9 +1,9 @@
-import socket
-import sys
-import traceback
-import mimetypes
 import os
-import urllib.request
+import sys
+import socket
+import mimetypes
+import traceback
+from pathlib import Path
 
 def response_ok(body=b"This is a minimal response", mimetype=b"text/plain"):
     """
@@ -104,53 +104,42 @@ def response_path(path):
     # result of executing `make_time.py`. But you need only return the
     # CONTENTS of `make_time.py`.
 
-    paths = [
-                '/a_web_page.html',
-                '/sample.txt',
-                '/make_time.py',
-                '/images/sample_1.png',
-                '/images/JPEG_example.jpg',
-                '/images/Sample_Scene_Balls.jpg',
-                '/favicon.ico'
-            ]
-    root_dir= 'C:/Users/stasaki/Desktop/Sean\'s stuff/python/socket-http-server/webroot'
 
-    if path == '/' or path =='/images':
+    #root_dir = os.path.dirname(os.path.realpath(__file__)) + "/webroot/"
+    root_dir = os.path.dirname(os.path.realpath(__file__))
 
-        content, mime_type = dir_contents(root_dir + path)
+    if path =="" or path =="/":
+        with open(root_dir + "/index.html", "r") as f:
+            content = f.read().encode()
+            content += "\r\n".join(os.listdir(root_dir + "/webroot/")).encode()   
+    elif path.endswith(".py"):
+        content = open(root_dir + "/make_time.py").read()
+        exec(content)
         content = content.encode()
-        mime_type = mime_type
-        return content, mime_type
-
-    if path not in paths:
-        raise NameError
-
-
-    path.replace("/", "\\")
-    p = 'C:/Users/stasaki/Desktop/Sean\'s stuff/python/socket-http-server/webroot/'
-    p.replace("/", "\\")
-
-
-    if path != '/a_web_page.html' or '/sample.txt':
-        with open(p + path, 'rb') as f:
-            content = f.read()
     else:
-        with open(p + path, 'r') as f:
-            content = f.read()
+        whole_path = Path(root_dir + "/webroot/" + path)
     
-    mime_type = mimetypes.guess_type(path)[0]
-   
-    return content, mime_type
+        try:
+            assert os.path.exists(whole_path)
+        except AssertionError:
+            raise NameError
+        else:
+            if os.path.isfile(whole_path):
+                with open(whole_path, "rb") as f:
+                    content = f.read()
+            else:
+                content = "\r\n".join(os.listdir(whole_path)).encode()   
 
-def dir_contents(root):
-    content = ""
-    for root, dirs, files in os.walk(root):
-        for dir in dirs:
-            content += dir + ", "
-        for file in files:
-            content += file + ", "
-    content = content[:-2].encode()
-    mime_type = "text/plain"
+    mime_type = b"text/plain"
+    if path.endswith(".html") or path.endswith('.htm') or path.endswith('') or path.endswith('/') or path.endswith('/') :
+        mime_type = b"text/html"
+    if path.endswith(".txt"):
+        mime_type = b"text/plain"
+    if path.endswith(".png"):
+        mime_type = b"image/png"
+    if path.endswith(".jpg"):
+        mime_type = b"image/jpeg"
+       
     return content, mime_type
 
 
@@ -193,12 +182,10 @@ def server(log_buffer=sys.stderr):
                         # response be a method_not_allowed response. If response_path raised
                         # a NameError, then let response be a not_found response. Else,
                         # use the content and mimetype from response_path to build a 
-                        # response_ok.
-                    if path == '/a_web_page.html':
-                        content = content.encode()              
+                        # response_ok.          
                     response = response_ok(
                         body= content,
-                        mimetype= mime_type.encode()
+                        mimetype= mime_type
                         )
 
                 except NotImplementedError:
